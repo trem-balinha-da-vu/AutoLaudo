@@ -1,3 +1,5 @@
+properties:
+
 POSTGRESQL_URL=localhost
 POSTGRESQL_PORT=5432
 POSTGRESQL_DATABASE=sistema_autolaudo
