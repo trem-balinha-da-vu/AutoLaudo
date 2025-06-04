@@ -1,0 +1,181 @@
+@startuml UseCases_AutoLaudo
+left to right direction
+
+skinparam usecase {
+  BackgroundColor LightBlue
+  BorderColor DarkBlue
+  ArrowColor Black
+}
+
+skinparam packageStyle rectangle
+
+'-------------------------------------------------------------
+' Atores no topo (alinhados horizontalmente)
+'-------------------------------------------------------------
+actor "Usuario" as Usuario
+actor "Perito" as Perito
+actor "Gerente Regional" as Gerente
+actor "Administrador" as Admin
+
+Usuario <|-- Perito
+Usuario <|-- Admin
+Perito <|-- Gerente
+
+rectangle Autenticacao{
+  usecase "Fazer Login" as UC_Login
+
+  Usuario -- (Autenticacao)
+  usecase "Acessar\nSistema" as Acesso
+  Acesso ..> UC_Login : <<include>>
+
+}
+
+
+'-------------------------------------------------------------
+' “Sistema AutoLaudo” engloba todos os casos de uso 
+'-------------------------------------------------------------
+rectangle "Sistema AutoLaudo" as Sistema{
+  (Sistema).> (Autenticacao) : <<include>>
+  'Perito'
+  usecase "Visualizar\nDashboard Individual"    as UC_Dash
+  usecase "Gerar Novo\nLaudo"                   as UC_Gerar_Laudo
+  usecase "Atualizar/Alterar\nLaudo"            as UC_Alterar_Laudo
+  usecase "Gerar\nRelatório (Pessoal)"          as UC_Gerar_Relatorio_P
+
+  'Gerente Regional'
+  usecase "Visualizar\nDashboard Equipe"         as UC_Dash_Equipe
+  usecase "Gerar\nRelatório de Equipe"          as UC_Gerar_Relatorio_G
+  
+  
+} 
+
+'=============================================================
+' Pacote: Gerenciar Laudo (DETALHADO)
+'=============================================================
+package " Módulo - Laudo" as Laudo {
+  left to right direction
+  
+  (Laudo).> (Sistema) : <<include>>
+
+  package "Passos Iniciais" as ColA {
+    usecase "Receber Solicitação de\nLaudo"                 as UC_Solicitacao
+    usecase "Agendar Inspeção"                              as UC_Agendar
+    usecase "Selecionar Veículo"                            as UC_Selecionar_Veiculo
+    usecase "Consultar API\nDetran/Renavam/Polícia"         as UC_Consultar_API
+    usecase "Inspecionar Visualmente"                       as UC_Inspecionar_Visual
+    usecase "Fotodocumentar Veículo"                        as UC_Fotodocumentar
+  }
+
+  package "Passos Finais" as ColB {
+    usecase "Analisar Identificação\n(Chassi/Motor)"         as UC_Analise_Identificacao
+    usecase "Analisar Aspectos\nMecânicos"                   as UC_Analise_Mecanica
+    usecase "Analisar Estrutura e\nCarroceria"               as UC_Analise_Estrutura
+    usecase "Realizar Testes\nComplementares"                as UC_Testes_Complementares
+    usecase "Verificar Documentos\ne Pendências"             as UC_Verificar_Documentos
+    usecase "Preencher Campos\ndo Formulário"                as UC_Preencher_Formulario
+    usecase "Anexar Imagens\n ao Formulário"                 as UC_Anexar_Imagens
+    usecase "Validar Conformidade\n   às Normas"             as UC_Validar_Normas
+    usecase "Gerar PDF do Laudo"                             as UC_GerarPDF_Laudo
+    usecase "Emitir e Entregar\n      Laudo"                 as UC_Emitir_Laudo
+  }
+  
+  (ColB)                   .down.> (ColA)                 : <<include>>
+  UC_Agendar               .> UC_Solicitacao              : <<include>>
+  UC_Selecionar_Veiculo    .> UC_Agendar                  : <<include>>
+  UC_Consultar_API         .up.> UC_Selecionar_Veiculo       : <<include>>
+  UC_Inspecionar_Visual    .up.> UC_Selecionar_Veiculo       : <<include>>
+  UC_Fotodocumentar        .down.> UC_Inspecionar_Visual       : <<include>>
+
+  UC_Analise_Identificacao .down.> UC_Inspecionar_Visual       : <<include>>
+  UC_Analise_Mecanica      .> UC_Analise_Identificacao    : <<include>>
+  UC_Analise_Estrutura     .> UC_Analise_Identificacao    : <<include>>
+  UC_Testes_Complementares .up.> UC_Analise_Mecanica         : <<extend>>
+  UC_Testes_Complementares .up.> UC_Analise_Estrutura        : <<extend>>
+
+  UC_Verificar_Documentos  .> UC_Selecionar_Veiculo       : <<include>>
+  UC_Preencher_Formulario  .down.> UC_Verificar_Documentos     : <<include>>
+  UC_Preencher_Formulario  .down.> UC_Fotodocumentar          : <<include>>
+  UC_Preencher_Formulario  .up.> UC_Analise_Identificacao    : <<include>>
+  UC_Preencher_Formulario  .up.> UC_Analise_Mecanica         : <<include>>
+
+  UC_Anexar_Imagens        .right.> UC_Preencher_Formulario     : <<include>>
+  UC_Anexar_Imagens        .> UC_Fotodocumentar          : <<include>>
+  UC_Validar_Normas        .left.> UC_Preencher_Formulario     : <<include>>
+  UC_Validar_Normas        .> UC_Consultar_API            : <<include>>
+
+  UC_GerarPDF_Laudo        .> UC_Validar_Normas           : <<include>>
+  UC_GerarPDF_Laudo        .> UC_Anexar_Imagens           : <<include>>
+  UC_GerarPDF_Laudo        .> UC_Preencher_Formulario     : <<include>>
+  UC_Emitir_Laudo          .> UC_GerarPDF_Laudo           : <<include>>
+}
+
+'=============================================================
+' Pacote: Gerar Relatórios
+'=============================================================
+package "Módulo - Relatórios" as Relatorio{
+  (Relatorio).> (Sistema) : <<include>>
+  usecase "Escolher Período"                     as UC_Escolher_Periodo
+  usecase "Filtrar Laudos"                       as UC_Filtrar_Laudos
+  usecase "Gerar PDF\ndo Relatório"               as UC_GerarPDF_Relatorio
+  usecase "Visualizar\nRelatório na Tela"         as UC_Visualizar_Relatorio
+
+  UC_Filtrar_Laudos .> UC_Escolher_Periodo       : <<include>>
+  UC_GerarPDF_Relatorio .> UC_Filtrar_Laudos     : <<include>>
+  UC_Visualizar_Relatorio .> UC_GerarPDF_Relatorio : <<include>>
+}
+
+
+'-------------------------------------------------------------
+' Ligações: peritos e gerentes
+'-------------------------------------------------------------
+UC_Gerar_Laudo -down- (Laudo)
+UC_Gerar_Relatorio_G -- (Relatorio)
+UC_Gerar_Relatorio_P -- (Relatorio)
+
+Perito --> UC_Dash
+Perito --> UC_Gerar_Laudo 
+Perito --> UC_Alterar_Laudo
+Perito --> UC_Gerar_Relatorio_P
+
+Gerente --> UC_Dash_Equipe          : "visualiza dashboard da equipe"
+Gerente --> UC_Gerar_Relatorio_G    : "gera relatório de equipe"
+
+rectangle "Sistema AutoLaudo - Visão do Administrador" as Visao_Admin{
+  (Visao_Admin).> (Autenticacao) : <<include>>
+
+  usecase "Alterar\nSenha de Usuário"           as UC_Alterar_Senha_Usuario
+  usecase "Cadastrar\nUsuário"                  as UC_Cadastrar_Usuario
+  usecase "Deletar\nUsuário"                    as UC_Deletar_Usuario
+  usecase "Atribuir\n Perfil"                   as UC_Atribuir_Perfil
+  usecase "Alterar Senha"                       as UC_Alterar_Senha
+  usecase "Configurar\nPermissão"               as UC_Configurar_Permissao
+  usecase "Visualizar\n Desempenho do App"      as UC_Desempenho
+
+}
+
+'-------------------------------------------------------------
+' Ligações: administrador 
+'-------------------------------------------------------------
+
+Admin -down-> UC_Alterar_Senha_Usuario
+Admin -down-> UC_Cadastrar_Usuario
+Admin -down-> UC_Deletar_Usuario
+Admin -down-> UC_Atribuir_Perfil
+Admin -down-> UC_Alterar_Senha
+Admin -down-> UC_Configurar_Permissao
+Admin -down-> UC_Desempenho
+
+
+'-------------------------------------------------------------
+' Atores externos: APIs (posicionados à direita do pacote)
+'-------------------------------------------------------------
+actor "API Detran" as API_Detran
+actor "API Renavam" as API_Renavam
+actor "API Polícia" as API_Policia
+
+' Indicar que o sub–caso “Consultar API” usa essas APIs
+UC_Consultar_API ..> API_Detran  : usa
+UC_Consultar_API ..> API_Renavam : usa
+UC_Consultar_API ..> API_Policia : usa
+
+@enduml

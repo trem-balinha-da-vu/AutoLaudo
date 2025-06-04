@@ -1,0 +1,186 @@
+@startuml ERD_AutoLaudo
+hide circle
+left to right direction
+
+
+'======================================================================
+' Entidades principais
+'======================================================================
+entity "USUARIO" as USUARIO {
+  * idUsuario : INTEGER <<PK>>
+    nome        : VARCHAR
+    email       : VARCHAR
+    senhaHash   : VARCHAR
+    perfil      : VARCHAR    (PERITO, GERENTE_REGIONAL, ADMINISTRADOR)
+}
+
+entity "PERITO" as PERITO {
+  registro : VARCHAR
+}
+
+entity "GERENTE" as GERENTE{
+  regional : VARCHAR
+}
+
+entity "ADMINISTRADOR" as ADM {
+  nivelAcesso : VARCHAR
+}
+
+PERITO ||--o{ USUARIO : extende de >
+GERENTE ||--o{ PERITO : extende de >
+ADM ||--o{ USUARIO : extende de >
+
+entity "PERMISSAO" as PERMISSAO {
+  * idPermissao : INTEGER <<PK>>
+    nomePermissao : VARCHAR
+    descricao     : VARCHAR
+}
+
+entity "USUARIO_PERMISSAO" as USUARIO_PERMISSAO {
+  * idUsuario    : INTEGER <<PK, FK>>
+  * idPermissao  : INTEGER <<PK, FK>>
+}
+
+USUARIO ||--o{ USUARIO_PERMISSAO : possui >
+PERMISSAO ||--o{ USUARIO_PERMISSAO : pertence >
+
+'======================================================================
+' Norma e TemplateLaudo (M:N)
+'======================================================================
+entity "NORMA" as NORMA {
+  * idNorma    : INTEGER <<PK>>
+    nomeNorma  : VARCHAR
+    tipo       : VARCHAR    (CONTRAN, ICPAS, OUTRAS)
+    textoNorma : TEXT
+}
+
+entity "TEMPLATE_LAUDO" as TEMPLATE_LAUDO {
+  * idTemplate       : INTEGER <<PK>>
+    nome             : VARCHAR
+    versao           : VARCHAR
+}
+
+entity "TEMPLATE_NORMA" as TEMPLATE_NORMA {
+  * idTemplate : INTEGER <<PK, FK>>
+  * idNorma    : INTEGER <<PK, FK>>
+}
+
+TEMPLATE_LAUDO ||--o{ TEMPLATE_NORMA : referencia >
+NORMA         ||--o{ TEMPLATE_NORMA : referenciada em >
+
+'======================================================================
+' FormularioLaudo e campos
+'======================================================================
+entity "FORMULARIO_LAUDO" as FORMULARIO_LAUDO {
+  * idFormulario : INTEGER <<PK>>
+    modoOffline   : BOOLEAN
+    idTemplate    : INTEGER <<FK>>  
+}
+
+FORMULARIO_LAUDO }o--|| TEMPLATE_LAUDO : usa >
+
+entity "FORM_LAUDO_CAMPO" as FORM_LAUDO_CAMPO {
+  * idFormulario : INTEGER <<PK, FK>>
+  * nomeCampo    : VARCHAR <<PK>>
+    valor         : VARCHAR
+}
+
+FORMULARIO_LAUDO ||--o{ FORM_LAUDO_CAMPO : possui campos >
+
+'======================================================================
+' Veiculo
+'======================================================================
+entity "VEICULO" as VEICULO {
+  * placa           : VARCHAR <<PK>>
+    chassi          : VARCHAR
+    renavam         : VARCHAR
+    modelo          : VARCHAR
+    anoFabricacao   : INTEGER
+    statusRegistro  : VARCHAR
+}
+
+'======================================================================
+' LaudoVeicular
+'======================================================================
+entity "SELO_DIGITAL" as SELO_DIGITAL {
+  * idSelo          : INTEGER <<PK>>
+    dataEmissao     : DATE
+    autoridadeEmissora : VARCHAR
+    hashConformidade   : VARCHAR
+}
+
+entity "LAUDO_VEICULAR" as LAUDO_VEICULAR {
+  * idLaudo          : INTEGER <<PK>>
+    dataCriacao      : DATE
+    dataEmissao      : DATE
+    status           : VARCHAR   ' (EM_EDICAO, VALIDADO, APROVADO, REJEITADO, GERADO_PDF)
+    tipoLaudo        : VARCHAR
+    descricaoProblema: TEXT
+    localTroca       : VARCHAR
+    detalhamentoTroca: TEXT
+    observacoes      : TEXT
+    hashDocumento    : VARCHAR
+  -- chaves estrangeiras --
+    idSelo           : INTEGER <<FK>>
+    idFormulario     : INTEGER <<FK>>
+    placaVeiculo     : VARCHAR <<FK>>
+    idPerito         : INTEGER <<FK>>   ' Usuário que gerou o laudo
+}
+
+LAUDO_VEICULAR }o--|| SELO_DIGITAL     : contém >
+LAUDO_VEICULAR ||--o{ FORMULARIO_LAUDO : originado de >
+LAUDO_VEICULAR }o--|| VEICULO          : referente a >
+LAUDO_VEICULAR }o--|| USUARIO          : gerado por >
+
+'======================================================================
+' Imagem e HistoricoAlteracao
+'======================================================================
+entity "IMAGEM" as IMAGEM {
+  * idImagem    : INTEGER <<PK>>
+    caminho     : VARCHAR
+    legenda     : VARCHAR
+    tipo        : VARCHAR
+    idLaudo     : INTEGER <<FK>>
+}
+
+LAUDO_VEICULAR ||--o{ IMAGEM : contém >
+
+entity "HISTORICO_ALTERACAO" as HISTORICO_ALTERACAO {
+  * idHist       : INTEGER <<PK>>
+    dataAlt      : DATETIME
+    descricao    : TEXT
+    idUsuario    : INTEGER <<FK>>   ' Quem fez a alteração
+    idLaudo      : INTEGER <<FK>>
+}
+
+LAUDO_VEICULAR ||--o{ HISTORICO_ALTERACAO : tem histórico >
+USUARIO        ||--o{ HISTORICO_ALTERACAO : registrado por >
+
+'======================================================================
+' Norma aplicada ao Laudo (M:N indireto)
+'======================================================================
+entity "LAUDO_NORMA" as LAUDO_NORMA {
+  * idLaudo : INTEGER <<PK, FK>>
+  * idNorma : INTEGER <<PK, FK>>
+}
+
+LAUDO_VEICULAR ||--o{ LAUDO_NORMA : valida de acordo com >
+NORMA         ||--o{ LAUDO_NORMA : aplicada em >
+
+'======================================================================
+' Veiculo (já definido) – IntegracaoDetran via processo, não armazenado
+'======================================================================
+' A integração com Detran e Renavam é feita via API,
+' portanto não mapeamos IntegracaoDetran como entidade persistente.
+
+'======================================================================
+' Usuários especializados (Perito, GerenteRegional, Administrador)
+'======================================================================
+' Já representados em USUARIO com atributo perfil.
+
+'======================================================================
+' Demais entidades de processo (Dashboard, Sincronizador, Auth2FA, Criptografia)
+'======================================================================
+' Não mapeadas como entidades ER, pois não geram tabelas persistentes.
+
+@enduml

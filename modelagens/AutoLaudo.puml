@@ -1,0 +1,254 @@
+@startuml AutoLaudo
+skinparam classAttributeIconSize 0
+left to right direction
+
+' Definindo perfis e status como enums
+enum PerfilTipo {
+  PERITO
+  GERENTE_REGIONAL
+  ADMINISTRADOR
+}
+
+
+enum LaudoStatus {
+  EM_EDICAO
+  VALIDADO
+  APROVADO
+  REJEITADO
+  GERADO_PDF
+}
+
+enum TipoNorma {
+  CONTRAN
+  ICPAS
+  OUTRAS
+}
+
+'-------------------------------------------------------------------------------
+' CLASSES DE SEGURANÇA E AUTENTICAÇÃO
+'-------------------------------------------------------------------------------
+class Auth2FA {
+  - códigoSMS: String
+  - aplicativo2FA: String
+  + enviarCódigo(usuario: Usuario): Boolean
+  + validarCódigo(input: String): Boolean
+}
+
+class Criptografia {
+  + criptografar(dados: String): String
+  + descriptografar(dadosCripto: String): String
+}
+
+
+'-------------------------------------------------------------------------------
+' CLASSES DE USUÁRIO E PERMISSÕES
+'-------------------------------------------------------------------------------
+class Usuario {
+  - idUsuario: Integer
+  - nome: String
+  - email: String
+  - senhaHash: String
+  - perfil: PerfilTipo
+  + autenticar(): Boolean
+}
+
+class Permissao {
+  - idPermissao: Integer
+  - nomePermissao: String
+  - descricao: String
+  + verificarPermissao(u: Usuario): Boolean
+}
+
+Usuario "1" -- "0..*" Permissao : possui >
+Usuario "1" ..> Auth2FA : "usa" >
+
+
+'-------------------------------------------------------------------------------
+' CLASSES PARA NORMAS E SELO DE CONFORMIDADE
+'-------------------------------------------------------------------------------
+class Norma {
+  - idNorma: Integer
+  - nomeNorma: String
+  - tipo: TipoNorma
+  - textoNorma: String
+  + aplicaAo(campo: String): Boolean
+}
+
+class SeloDigital {
+  - idSelo: Integer
+  - dataEmissao: Date
+  - autoridadeEmissora: String
+  - hashConformidade: String
+  + validarSelo(): Boolean
+}
+
+
+'-------------------------------------------------------------------------------
+' CLASSES PARA FORMULÁRIOS E TEMPLATES DE LAUDO
+'-------------------------------------------------------------------------------
+class TemplateLaudo {
+  - idTemplate: Integer
+  - nome: String
+  - versao: String
+  - camposObrigatorios: List<String>
+  - normasAssociadas: List<Norma>
+  + aplicarTemplate(): void
+  + validarNormas(campos: Map<String,String>): Boolean
+}
+
+class FormularioLaudo {
+  - idFormulario: Integer
+  - campos: Map<String, String>
+  - template: TemplateLaudo
+  - modoOffline: Boolean
+  + preencherCampo(nome: String, valor: String): void
+  + carregarTemplate(templateId: String): void
+  + validarFormulario(): Boolean
+  + entrarModoOffline(): void
+  + sairModoOffline(): void
+}
+
+FormularioLaudo "1" -- "1" TemplateLaudo       : usa >
+TemplateLaudo "1" -- "0..*" Norma             : referencia >
+ 
+
+'-------------------------------------------------------------------------------
+' CLASSES DO LAUDO VEICULAR
+'-------------------------------------------------------------------------------
+class LaudoVeicular {
+  - idLaudo: Integer
+  - dataCriacao: Date
+  - dataEmissao: Date
+  - status: LaudoStatus
+  - tipoLaudo: String
+  - descricaoProblema: String
+  - detalhamentoAnalises: String
+  - observacoes: String
+  - selo: SeloDigital
+  - hashDocumento: String
+  - historicoAlteracao: HistoricoAlteracao
+  - imagens: List<Imagem>
+  + gerarPDFPadronizado(): Byte[]
+  + validarCamposObrigatorios(): Boolean
+  + validarNormasInternas(): Boolean
+  + adicionarImagem(img: Imagem): void
+  + registrarHistorico(usuario: Usuario, desc: String): void
+}
+
+LaudoVeicular "1" -- "1" SeloDigital           : contém >
+LaudoVeicular "1" -- "0..*" Imagem             : contém >
+LaudoVeicular "1" -- "0..*" HistoricoAlteracao : tem histórico >
+LaudoVeicular ..> Norma                        : valida de acordo com >
+LaudoVeicular ..> Criptografia                 : "criptografa dados" >
+
+'-------------------------------------------------------------------------------
+' CLASSES PARA HISTÓRICO DE ALTERAÇÕES
+'-------------------------------------------------------------------------------
+class HistoricoAlteracao {
+  - idHist: Integer
+  - dataAlt: DateTime
+  - usuario: Usuario
+  - descricao: String
+  + descreverAlteracao(): String
+}
+
+
+'-------------------------------------------------------------------------------
+' CLASSES DE INTEGRAÇÃO COM FONTES OFICIAIS (Detran, Renavam, Polícia etc.)
+'-------------------------------------------------------------------------------
+class IntegracaoDetran {
+  - idIntegracao: Integer
+  - urlAPI: String
+  - tokenAcesso: String
+  + consultarDadosVeiculo(placa: String): Veiculo
+  + validarChassi(chassi: String): Boolean
+  + validarLicenciamento(placa: String): Boolean
+}
+
+class Veiculo {
+  - placa: String
+  - chassi: String
+  - renavam: String
+  - modelo: String
+  - anoFabricacao: Integer
+  - statusRegistro: String
+  + estaLicenciado(): Boolean
+}
+
+LaudoVeicular ..> IntegracaoDetran  : "consulta >"
+IntegracaoDetran ..> Veiculo        : retorna >
+
+
+'-------------------------------------------------------------------------------
+' CLASSE PARA GERAÇÃO DE RELATÓRIOS E DASHBOARD
+'-------------------------------------------------------------------------------
+class Dashboard {
+  - idDashboard: Integer
+  - metrica: String
+  - periodo: String
+  + gerarGrafico(laudos: List<LaudoVeicular>): void
+  + exibirIndicadores(): Map<String, Number>
+}
+
+Perito ..> Dashboard : acessa >
+
+
+'-------------------------------------------------------------------------------
+' CLASSE DE IMAGENS
+'-------------------------------------------------------------------------------
+class Imagem {
+  - idImagem: Integer
+  - caminho: String
+  - legenda: String
+  - tipo: String
+  + excluir(): void
+}
+
+
+'-------------------------------------------------------------------------------
+' CLASSES DE USUÁRIOS ESPECIALIZADOS (Herança)
+'-------------------------------------------------------------------------------
+class Perito {
+  - registro: String
+  + gerarLaudo(form: FormularioLaudo): LaudoVeicular
+  + anexarImagem(laudo: LaudoVeicular, img: Imagem): void
+  + gerarRelatórioIndividual(laudos: List<Integer>): Byte[]
+  + alterarStatusLaudo(laudo: LaudoVeicular, status: LaudoStatus): LaudoStatus
+}
+
+class GerenteRegional {
+  - regional: String
+  + aprovarLaudo(laudo: LaudoVeicular): void
+  + visualizarProdutividade(): void
+  + gerarRelatórioEquipe(laudos: List<Integer>): Byte[]
+}
+
+class Administrador {
+  - nivelAcesso: String
+  + cadastrarUsuario(u: Usuario): void
+  + removerUsuario(id: Integer): void
+  + atualizarUsuario(id: Integer): void
+  + atribuirPerfil(u: Usuario): void
+  + alterarSenha(senha: String, novaSenha: String): void
+  + configurarPermissao(u: Usuario, p: Permissao): void
+}
+
+Usuario <|-- Perito
+Perito <|-- GerenteRegional
+Usuario <|-- Administrador
+
+'-------------------------------------------------------------------------------
+' CLASSE RESPONSÁVEL POR SINCRONIZAÇÃO (Offline / Online)
+'-------------------------------------------------------------------------------
+class Sincronizador {
+  - idSync: Integer
+  - ultimaSincronizacao: DateTime
+  + sincronizarDados(): void
+  + agendarSincronizacaoAutomatica(): void
+}
+
+Sincronizador ..> FormularioLaudo : sincroniza >
+FormularioLaudo ..> Sincronizador : "chama" >
+
+
+@enduml
