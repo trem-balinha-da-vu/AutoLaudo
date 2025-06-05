@@ -4,6 +4,7 @@ package com.sistema.autolaudo.model.common;
 import java.io.Serializable;
 import java.util.UUID;
 
+import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 
 import jakarta.persistence.Column;
@@ -23,7 +24,7 @@ public class BaseModel<T extends BaseModel<T>> implements Serializable{
     @Column(nullable = false, name = "id")
     public Long id;
 
-    /*@Column(nullable = false, name = "uuid")
+    @Column(nullable = false, name = "uuid")
     public String uuid;
 
     @PrePersist
@@ -31,6 +32,6 @@ public class BaseModel<T extends BaseModel<T>> implements Serializable{
         if (Strings.isBlank(uuid)) {
             uuid = UUID.randomUUID().toString();
         }
-    }*/
+    }
 
 }

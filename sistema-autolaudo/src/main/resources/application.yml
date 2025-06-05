@@ -5,3 +5,6 @@ spring:
     password: ${POSTGRESQL_PASSWORD}
     url: jdbc:postgresql://${POSTGRESQL_URL}:${POSTGRESQL_PORT}/${POSTGRESQL_DATABASE}
     username: ${POSTGRESQL_USER}
+
+  flyway:
+    enabled: true
