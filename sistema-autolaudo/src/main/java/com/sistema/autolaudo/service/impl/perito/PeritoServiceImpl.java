@@ -5,15 +5,18 @@ import com.sistema.autolaudo.dto.perito.PeritoResponse;
 import com.sistema.autolaudo.mapper.gerenteregional.GerenteRegionalMapper;
 import com.sistema.autolaudo.mapper.perito.PeritoMapper;
 import com.sistema.autolaudo.model.gerenteregional.GerenteRegional;
+import com.sistema.autolaudo.model.perfil.Perfil;
 import com.sistema.autolaudo.model.perito.Perito;
 import com.sistema.autolaudo.model.permissao.Permissao;
 import com.sistema.autolaudo.model.permissao.UsuarioPermissao;
 import com.sistema.autolaudo.model.permissao.UsuarioPermissaoId;
 import com.sistema.autolaudo.model.usuario.Usuario;
 import com.sistema.autolaudo.repository.gerenteregional.GerenteRegionalRepository;
+import com.sistema.autolaudo.repository.perfil.PerfilRepository;
 import com.sistema.autolaudo.repository.perito.PeritoRepository;
 import com.sistema.autolaudo.repository.permissao.PermissaoRepository;
 import com.sistema.autolaudo.repository.permissao.UsuarioPermissaoRepository;
+import com.sistema.autolaudo.repository.usuario.UsuarioRepository;
 import com.sistema.autolaudo.service.perito.PeritoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,6 +39,8 @@ public class PeritoServiceImpl implements PeritoService {
     private PermissaoRepository permissaoRepository;
     @Autowired
     private GerenteRegionalMapper gerenteRegionalMapper;
+    @Autowired
+    private PerfilRepository perfilRepository;
 
     @Autowired
     private PeritoMapper peritoMapper;
@@ -50,6 +55,17 @@ public class PeritoServiceImpl implements PeritoService {
         Perito perito = peritoRepository.findById(peritoId)
                 .orElseThrow(() -> new RuntimeException("Perito não encontrado"));
 
+        Usuario usuario = perito.getUsuario();
+
+        usuario.setPerfil(perfilRepository.findById(2L)
+                .orElseGet(() -> {
+                        Perfil novo = new Perfil();
+                        novo.setPerfil("GERENTE_REGIONAL");
+                        novo.setId_perfil(2L);
+                        return novo;
+                    })
+        );
+
         // Cria registro gerente_regional se não existir
         GerenteRegional gerente = gerenteRegionalRepository.findByPeritoId(peritoId)
                 .orElseGet(() -> {
@@ -60,8 +76,6 @@ public class PeritoServiceImpl implements PeritoService {
                     return gerenteRegionalRepository.save(novo);
                 });
 
-        // Adiciona permissões de gerente se ainda não tiver
-        Usuario usuario = perito.getUsuario();
         for (Long idPermissao : PERMISSOES_GERENTE) {
             UsuarioPermissaoId upId = new UsuarioPermissaoId(usuario.getId(), idPermissao);
             if (!usuarioPermissaoRepository.existsById(upId)) {
@@ -88,6 +102,15 @@ public class PeritoServiceImpl implements PeritoService {
                 .orElseThrow(() -> new RuntimeException("Perito não encontrado"));
         Usuario usuario = perito.getUsuario();
 
+        usuario.setPerfil(perfilRepository.findById(1L)
+                .orElseGet(() -> {
+                    Perfil novo = new Perfil();
+                    novo.setPerfil("PERITO");
+                    novo.setId_perfil(1L);
+                    return novo;
+                })
+        );
+
         // Remove permissões de gerente, mantém só as de perito
         for (Long idPermissao : PERMISSOES_GERENTE) {
             UsuarioPermissaoId upId = new UsuarioPermissaoId(usuario.getId(), idPermissao);
@@ -96,7 +119,18 @@ public class PeritoServiceImpl implements PeritoService {
             }
         }
 
-        // Garante permissões de perito (opcional, se quiser garantir)
+        // 1. Recupera todas as permissões do usuário
+        List<UsuarioPermissao> permissoesUsuario = usuarioPermissaoRepository.findAllByUsuarioId(usuario.getId());
+
+        // 2. Para cada permissão do usuário, remove se NÃO for permissão de perito
+        for (UsuarioPermissao up : permissoesUsuario) {
+            Long idPermissao = up.getPermissao().getId();
+            if (!PERMISSOES_PERITO.contains(idPermissao)) {
+                usuarioPermissaoRepository.delete(up);
+            }
+        }
+
+        // 3. Garante que o usuário terá todas as permissões de perito (cria se faltar)
         for (Long idPermissao : PERMISSOES_PERITO) {
             UsuarioPermissaoId upId = new UsuarioPermissaoId(usuario.getId(), idPermissao);
             if (!usuarioPermissaoRepository.existsById(upId)) {
