@@ -19,8 +19,6 @@ public class Permissao {
     @Column(name = "id", updatable = false, nullable = false)
     private Long id;
 
-
-
     @Column(name = "nome_permissao", nullable = false, length = 50)
     private String nomePermissao;
 

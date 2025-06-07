@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
-import com.sistema.autolaudo.response.common.BaseReturn;
+import com.sistema.autolaudo.dto.common.BaseReturn;
 
 @ControllerAdvice
 public class ExceptionHandle {
@@ -15,7 +15,7 @@ public class ExceptionHandle {
     protected ResponseEntity<Object> handleConstraintViolation(BaseException exception, WebRequest request) {
 
 
-        BaseReturn<Object> response = new BaseReturn<Object>();
+        BaseReturn<Object> response = new BaseReturn<>();
         response.success = false;
         response.description = exception.getMessage();
 

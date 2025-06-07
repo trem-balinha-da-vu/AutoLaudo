@@ -1,7 +1,7 @@
 package com.sistema.autolaudo.model.permissao;
 
 import com.sistema.autolaudo.model.usuario.Usuario;
-import com.sistema.autolaudo.model.usuario.UsuarioPermissaoId;
+import com.sistema.autolaudo.model.permissao.UsuarioPermissaoId;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

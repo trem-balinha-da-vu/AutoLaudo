@@ -1,5 +1,6 @@
 package com.sistema.autolaudo.service.usuario;
 
+import com.sistema.autolaudo.dto.permissao.PermissaoResponse;
 import com.sistema.autolaudo.dto.usuario.UsuarioRequest;
 import com.sistema.autolaudo.dto.usuario.UsuarioResponse;
 
@@ -16,4 +17,7 @@ public interface UsuarioService {
     UsuarioResponse buscarPorId(Long id);
 
     List<UsuarioResponse> buscarTodos();
+
+    List<PermissaoResponse> listarPermissoesDoUsuario(Long usuarioId);
+
 }

@@ -6,13 +6,11 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class PermissaoResponse {
+public class UsuarioPermissaoRequest {
 
-    @JsonProperty("id")
-    private Long id;
+    @JsonProperty("usuario_id")
+    private Long usuarioId;
 
-    @JsonProperty("nome_permissao")
-    private String nomePermissao;
-
-
+    @JsonProperty("permissao_id")
+    private Long permissaoId;
 }

@@ -1,4 +1,4 @@
-package com.sistema.autolaudo.model.usuario;
+package com.sistema.autolaudo.model.permissao;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
