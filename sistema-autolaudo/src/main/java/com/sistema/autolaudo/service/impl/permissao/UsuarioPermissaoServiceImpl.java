@@ -39,10 +39,13 @@ public class UsuarioPermissaoServiceImpl implements UsuarioPermissaoService {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
         Permissao permissao = permissaoRepository.findById(permissaoId)
                 .orElseThrow(() -> new RuntimeException("Permissão não encontrada"));
+
         UsuarioPermissao usuarioPermissao = usuarioPermissaoMapper.toModel(usuario, permissao);
 
-        // Se usar id composto, setar:
-        // usuarioPermissao.setId(new UsuarioPermissaoId(usuarioId, permissaoId));
+        // ESSENCIAL: seta o id composto ANTES de salvar!
+        usuarioPermissao.setId(new UsuarioPermissaoId(usuarioId, permissaoId));
+        usuarioPermissao.setUsuario(usuario);
+        usuarioPermissao.setPermissao(permissao);
 
         usuarioPermissao = usuarioPermissaoRepository.save(usuarioPermissao);
         return usuarioPermissaoMapper.toResponse(usuarioPermissao);

@@ -1,9 +1,11 @@
 package com.sistema.autolaudo.controller.permissao;
 
+import com.sistema.autolaudo.dto.permissao.UsuarioPermissaoRequest;
 import com.sistema.autolaudo.dto.permissao.UsuarioPermissaoResponse;
 import com.sistema.autolaudo.dto.common.BaseReturn;
 import com.sistema.autolaudo.service.permissao.UsuarioPermissaoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,8 +18,9 @@ public class UsuarioPermissaoController {
     private UsuarioPermissaoService usuarioPermissaoService;
 
     @PostMapping(consumes = "application/json", produces = "application/json")
-    public BaseReturn<UsuarioPermissaoResponse> create(@RequestParam("usuarioId") Long usuarioId,
-                                                       @RequestParam("permissaoId") Long permissaoId) {
+    public BaseReturn<UsuarioPermissaoResponse> create(@Validated @RequestBody UsuarioPermissaoRequest request) {
+        Long usuarioId = request.getUsuarioId();
+        Long permissaoId = request.getPermissaoId();
         UsuarioPermissaoResponse response = usuarioPermissaoService.criar(usuarioId, permissaoId);
         return new BaseReturn<>(response);
     }
