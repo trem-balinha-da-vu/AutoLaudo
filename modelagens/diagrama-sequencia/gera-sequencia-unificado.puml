@@ -1,0 +1,161 @@
+@startuml sequencia
+actor Usuario
+actor Perito
+actor Gerente
+actor Admin
+participant "Frontend" as FE
+participant "API Backend" as API
+database "DB"
+database "Detran API" as Detran
+
+== LOGIN ==
+Usuario -> FE : Acessa tela de login
+FE -> Usuario : Exibe formulário
+Usuario -> FE : Digita usuário e senha
+FE -> API : POST /login {usuario, senha}
+API -> DB : Verifica credenciais
+DB --> API : Dados do usuário/perfil/token
+API -> FE : Retorna token + perfil + permissões
+FE -> Usuario : Redireciona para dashboard ou mostra erro
+
+== DASHBOARD ==
+Usuario -> FE : Acessa dashboard (após login)
+FE -> API : GET /dashboard (token)
+API -> DB : Busca dados do usuário e atalhos
+
+alt Perfil = PERITO
+    API -> DB : Busca laudos em aberto do perito
+    DB --> API : Lista de laudos
+    API -> FE : Retorna dados do dashboard (customizado)
+    FE -> Usuario : Exibe atalhos e dados relevantes
+
+    group Fluxos do Perito
+        opt Visualizar laudos em aberto
+            Usuario -> FE : Seleciona "Laudos em Aberto"
+            FE -> API : GET /laudos?status=EM_EDICAO
+            API -> DB : Busca laudos do usuário
+            DB --> API : Retorna lista de laudos
+            API -> FE : Retorna laudos em aberto
+            FE -> Usuario : Exibe lista de laudos
+        end
+        opt Gerar novo laudo
+            Usuario -> FE : Seleciona "Novo Laudo"
+            FE -> API : GET /formularios
+            API -> DB : Busca template/formulário
+            DB --> API : Retorna formulário
+            API -> FE : Envia formulário para preenchimento
+            FE -> Usuario : Exibe formulário dinâmico
+
+            Usuario -> FE : Preenche campos (ex: placa, chassi)
+            FE -> API : GET /veiculo/{placa} (validação externa)
+            API -> Detran : Consulta dados oficiais (opcional)
+            Detran --> API : Dados do veículo
+            API -> FE : Preenche campos automaticamente
+
+            Usuario -> FE : Anexa imagens/evidências
+            Usuario -> FE : Salva rascunho ou envia laudo
+            FE -> API : POST /laudos {dados completos}
+            API -> DB : Salva laudo, imagens, status = EM_EDICAO/EM_ANALISE
+            DB --> API : Confirmação
+            API -> FE : Retorna confirmação/sucesso
+            FE -> Usuario : Mostra laudo salvo/emitido
+        end
+    end
+
+else Perfil = GERENTE REGIONAL
+    API -> DB : Busca laudos da equipe
+    API -> DB : Busca dados dos peritos sob gestão
+    DB --> API : Lista de laudos e peritos
+    API -> FE : Retorna dashboard do gerente
+    FE -> Usuario : Exibe atalhos e painel da equipe
+
+    group Fluxos do Gerente
+        opt Gerenciar Equipe
+            Usuario -> FE : Seleciona "Gerenciar Equipe"
+            FE -> API : GET /gerentes-regionais/{id}/peritos
+            API -> DB : Busca lista de peritos sob gestão
+            DB --> API : Lista de peritos
+            API -> FE : Retorna lista e status de cada perito
+            FE -> Usuario : Exibe painel da equipe
+
+            opt Visualizar perito
+                Usuario -> FE : Clica em perito X
+                FE -> API : GET /peritos/{id}
+                API -> DB : Busca dados do perito e laudos
+                DB --> API : Retorna detalhes do perito
+                API -> FE : Retorna dados completos do perito
+                FE -> Usuario : Exibe perfil do perito, laudos, produtividade, etc.
+            end
+
+            opt Atribuir tarefa
+                Usuario -> FE : Clica em "Atribuir Laudo"
+                FE -> API : POST /laudos/atribuir {perito_id, dados_laudo}
+                API -> DB : Cria laudo e vincula ao perito
+                DB --> API : Confirmação
+                API -> FE : Retorna confirmação
+                FE -> Usuario : Mostra mensagem de sucesso
+            end
+        end
+        opt Visualizar relatórios
+            Usuario -> FE : Seleciona "Relatórios"
+            FE -> API : GET /relatorios?filtros
+            API -> DB : Executa consultas agregadas
+            DB --> API : Dados do relatório
+            API -> FE : Retorna relatório
+            FE -> Usuario : Exibe gráfico/tabela
+
+            opt Exportar PDF
+                Usuario -> FE : Clica "Exportar PDF"
+                FE -> API : GET /relatorios/exportar?filtros
+                API -> DB : Gera relatório em PDF
+                DB --> API : Caminho do PDF
+                API -> FE : Download do PDF
+                FE -> Usuario : Baixa ou abre o PDF
+            end
+        end
+    end
+
+else Perfil = ADMIN
+    API -> DB : Busca métricas do sistema
+    DB --> API : Dados agregados
+    API -> FE : Retorna dashboard do admin
+    FE -> Usuario : Exibe métricas do sistema
+
+    group Gerenciamento de perfis/usuários
+        Usuario -> FE : Seleciona "Gerenciar Usuários"
+        FE -> API : GET /usuarios
+        API -> DB : Busca lista de usuários
+        DB --> API : Lista de usuários
+        API -> FE : Exibe lista
+
+        opt Editar permissões
+            Usuario -> FE : Clica em usuário X
+            FE -> API : GET /usuarios/{id}/permissao
+            API -> DB : Busca permissões do usuário
+            DB --> API : Lista de permissões
+            API -> FE : Exibe permissões atuais
+
+            Usuario -> FE : Adiciona/remove permissões
+            FE -> API : POST /usuarios-permissoes
+            API -> DB : Atualiza permissões do usuário
+            DB --> API : Confirmação
+            API -> FE : Atualiza exibição
+        end
+
+        opt Alterar perfil
+            Usuario -> FE : Altera perfil do usuário
+            FE -> API : PUT /usuarios/{id}
+            API -> DB : Atualiza perfil
+            DB --> API : Confirmação
+            API -> FE : Mostra sucesso
+        end
+    end
+end
+
+== LOGOUT ==
+Usuario -> FE : Clica em "Sair"
+FE -> API : POST /logout (token)
+API -> FE : Invalida token/sessão
+FE -> Usuario : Redireciona para login
+
+@enduml

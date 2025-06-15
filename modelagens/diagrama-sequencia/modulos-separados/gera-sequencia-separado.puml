@@ -1,0 +1,185 @@
+' ===== Login =====
+@startuml login
+actor Usuario
+participant "Frontend" as FE
+participant "API Backend" as API
+database "DB"
+
+Usuario -> FE : Acessa tela de login
+FE -> Usuario : Exibe formulário
+Usuario -> FE : Digita usuário e senha
+FE -> API : POST /login {usuario, senha}
+API -> DB : Verifica credenciais
+DB --> API : Dados do usuário/perfil/token
+API -> FE : Retorna token + perfil + permissões
+FE -> Usuario : Redireciona para dashboard ou mostra erro
+@enduml
+
+
+' ===== Dashboard =====
+@startuml dashboard
+actor Usuario
+participant "Frontend" as FE
+participant "API Backend" as API
+database "DB"
+
+Usuario -> FE : Acessa dashboard (após login)
+FE -> API : GET /dashboard (token)
+API -> DB : Busca dados do usuário e atalhos
+alt Perfil = PERITO
+    API -> DB : Busca laudos em aberto do perito
+    DB --> API : Lista de laudos
+else Perfil = GERENTE REGIONAL
+    API -> DB : Busca laudos da equipe
+    API -> DB : Busca dados dos peritos sob gestão
+    DB --> API : Lista de laudos e peritos
+else Perfil = ADMIN
+    API -> DB : Busca métricas do sistema
+    DB --> API : Dados agregados
+end
+API -> FE : Retorna dados do dashboard (customizado)
+FE -> Usuario : Exibe atalhos e dados relevantes
+@enduml
+
+
+' ===== Gerente =====
+@startuml gerente
+actor Gerente
+participant "Frontend" as FE
+participant "API Backend" as API
+database "DB"
+
+Gerente -> FE : Seleciona "Gerenciar Equipe"
+FE -> API : GET /gerentes-regionais/{id}/peritos
+API -> DB : Busca lista de peritos sob gestão
+DB --> API : Lista de peritos
+API -> FE : Retorna lista e status de cada perito
+FE -> Gerente : Exibe painel da equipe
+
+alt Gerente seleciona um perito
+    Gerente -> FE : Clica em perito X
+    FE -> API : GET /peritos/{id}
+    API -> DB : Busca dados do perito e laudos
+    DB --> API : Retorna detalhes do perito
+    API -> FE : Retorna dados completos do perito
+    FE -> Gerente : Exibe perfil do perito, laudos, produtividade, etc.
+end
+
+alt Gerente quer atribuir tarefa
+    Gerente -> FE : Clica em "Atribuir Laudo"
+    FE -> API : POST /laudos/atribuir {perito_id, dados_laudo}
+    API -> DB : Cria laudo e vincula ao perito
+    DB --> API : Confirmação
+    API -> FE : Retorna confirmação
+    FE -> Gerente : Mostra mensagem de sucesso
+end
+
+@enduml
+
+
+' ===== Laudo =====
+@startuml laudo
+actor Perito
+participant "Frontend" as FE
+participant "API Backend" as API
+database "DB"
+database "Detran API" as Detran
+
+Perito -> FE : Seleciona "Novo Laudo"
+FE -> API : GET /formularios
+API -> DB : Busca template/formulário
+DB --> API : Retorna formulário
+API -> FE : Envia formulário para preenchimento
+FE -> Perito : Exibe formulário dinâmico
+
+Perito -> FE : Preenche campos (ex: placa, chassi)
+FE -> API : GET /veiculo/{placa} (validação externa)
+API -> Detran : Consulta dados oficiais (opcional)
+Detran --> API : Dados do veículo
+API -> FE : Preenche campos automaticamente
+
+Perito -> FE : Anexa imagens/evidências
+Perito -> FE : Salva rascunho ou envia laudo
+FE -> API : POST /laudos {dados completos}
+API -> DB : Salva laudo, imagens, status = EM_EDICAO/EM_ANALISE
+DB --> API : Confirmação
+API -> FE : Retorna confirmação/sucesso
+FE -> Perito : Mostra laudo salvo/emitido
+
+@enduml
+
+' ===== Relatório =====
+@startuml relatorio
+actor Usuario
+participant "Frontend" as FE
+participant "API Backend" as API
+database "DB"
+
+Usuario -> FE : Seleciona "Relatórios"
+FE -> API : GET /relatorios?filtros
+API -> DB : Executa consultas agregadas (ex: produtividade, laudos por status)
+DB --> API : Dados do relatório
+API -> FE : Retorna relatório
+FE -> Usuario : Exibe gráfico/tabela
+
+alt Usuario exporta PDF
+    Usuario -> FE : Clica "Exportar PDF"
+    FE -> API : GET /relatorios/exportar?filtros
+    API -> DB : Gera relatório em PDF
+    DB --> API : Caminho do PDF
+    API -> FE : Download do PDF
+    FE -> Usuario : Baixa ou abre o PDF
+end
+
+@enduml
+
+
+' ===== Gerenciamento de perfis =====
+@startuml gerenciamento de perfis 
+actor Admin
+participant "Frontend" as FE
+participant "API Backend" as API
+database "DB"
+
+Admin -> FE : Seleciona "Gerenciar Usuários"
+FE -> API : GET /usuarios
+API -> DB : Busca lista de usuários
+DB --> API : Lista de usuários
+API -> FE : Exibe lista
+
+alt Admin edita permissões
+    Admin -> FE : Clica em usuário X
+    FE -> API : GET /usuarios/{id}/permissao
+    API -> DB : Busca permissões do usuário
+    DB --> API : Lista de permissões
+    API -> FE : Exibe permissões atuais
+
+    Admin -> FE : Adiciona/remove permissões
+    FE -> API : POST /usuarios-permissoes
+    API -> DB : Atualiza permissões do usuário
+    DB --> API : Confirmação
+    API -> FE : Atualiza exibição
+end
+
+alt Admin altera perfil
+    Admin -> FE : Altera perfil do usuário
+    FE -> API : PUT /usuarios/{id}
+    API -> DB : Atualiza perfil
+    DB --> API : Confirmação
+    API -> FE : Mostra sucesso
+end
+
+@enduml
+
+
+' ===== Logout =====
+@startuml logout
+actor Usuario
+participant "Frontend" as FE
+participant "API Backend" as API
+
+Usuario -> FE : Clica em "Sair"
+FE -> API : POST /logout (token)
+API -> FE : Invalida token/sessão
+FE -> Usuario : Redireciona para login
+@enduml
