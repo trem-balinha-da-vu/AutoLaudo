@@ -18,6 +18,8 @@ Até o presente momento, a versão atual conta com o módulo usuário apenas.
     - [Permissões](#permissões)
     - [Perfis](#perfis)
 - [Fluxo do Módulo Usuário](#fluxo-do-módulo-usuário)
+- [Modelagens e Documentação Visual](#modelagens-e-documentação-visual)
+
 
 ---
 
@@ -282,8 +284,112 @@ Até o presente momento, a versão atual conta com o módulo usuário apenas.
 * Use o Postman para simular todos os fluxos antes de integrar com frontend ou mobile.
 * Os DTOs de resposta sempre trazem as entidades aninhadas conforme relacionamento (ex: GerenteRegionalResponse traz PeritoResponse e este traz UsuarioResponse).
 
+--- 
+---
 ---
 
-> Qualquer dúvida ou necessidade de endpoint extra, consulte o código ou entre em contato comigo.
+
+## Modelagens e Documentação Visual
+
+O AutoLaudo é acompanhado de diversas modelagens visuais para apoiar o entendimento dos fluxos, regras de negócio e estrutura de dados do sistema.  
+Esses diagramas são fundamentais para devs, analistas, QAs e gestores.
+
+### Onde encontrar
+
+Os arquivos de modelagem estão organizados em:
+ /modelagens/
+
+
+---
+
+### Tipos de Diagrama e Exemplos Visuais
+
+#### 1. **Diagrama de Casos de Uso (Use Case)**
+
+Arquivo: `UseCases_AutoLaudo.puml`, `UseCases_AutoLaudo.png` 
+Formato: PlantUML, PNG
+
+**Descrição:**  
+Apresenta as interações dos atores (usuários) com as principais funcionalidades do sistema.
+
+**Visualização:**  
+![Diagrama de Casos de Uso](modelagens\diagrama-caso-de-uso\UseCases_AutoLaudo.png)
+
+**Cenário mostrado:**  
+No exemplo acima, o ator **Perito** pode criar laudos, consultar históricos e editar seus próprios laudos. O **Gerente Regional** pode, além disso, visualizar métricas da equipe e aprovar laudos. O **Administrador** tem acesso a toda a gestão de perfis, permissões e relatórios do sistema.
+
+---
+
+#### 2. **Diagrama Entidade-Relacionamento (ER ou ERD)**
+
+Arquivos: `ER_AutoLaudo.puml`, `ERD_AutoLaudo.png`  
+Formatos: PlantUML, PNG
+
+**Descrição:**  
+Modela as entidades do banco de dados (tabelas), seus campos e os relacionamentos (associações, chaves estrangeiras etc).
+
+**Visualização:**  
+![Diagrama Entidade-Relacionamento](modelagens\diagrama-ER\ERD_AutoLaudo.png)
+
+**Cenário mostrado:**  
+No diagrama acima, temos entidades como **Usuário**, **Perito**, **GerenteRegional**, **Permissão**, **Perfil** e os relacionamentos entre elas. Por exemplo, cada Usuário pode ter vários Perfis e Permissões, e há uma ligação clara entre Perito e Gerente Regional (para promoções/rebaixamentos). O diagrama serve como base para implementação e manutenção do banco de dados relacional.
+
+---
+
+#### 3. **Diagrama de Sequência**
+
+Arquivo(s): `gera-sequencia-separado.puml`, que cria cada módulo de maneira separada para facilitar a visualização (`dashboard.png`, `gerenciamento de perfis.png`, `gerente.png`, `laudo.png`, `login.png`, `logout.png`e `relatorio.png`), e `gera-sequencia-unificado.puml`, que gera um grande diagrama, com tudo unificado em um arquivo só.
+Formatos: PlantUML e PNG
+
+**Descrição:**  
+Mostra, passo a passo, a comunicação entre os componentes do sistema em cada fluxo (usuário → frontend → backend → banco de dados).
+ 
+ **Visualização:**
+ * **Diagramas separados por módulo**  
+ Login![](modelagens\diagrama-sequencia\modulos-separados\login.png)
+ Dashboard![](modelagens\diagrama-sequencia\modulos-separados\dashboard.png)
+ Laudo![](modelagens\diagrama-sequencia\modulos-separados\laudo.png)
+ Relatorio![](modelagens\diagrama-sequencia\modulos-separados\relatorio.png)
+ Gerente![](modelagens\diagrama-sequencia\modulos-separados\gerente.png)
+ Gerenciamento De Perfis - Admin![](modelagens\diagrama-sequencia\modulos-separados\gerenciamento_de_perfis.png)
+ Logout 
+ ![](modelagens\diagrama-sequencia\modulos-separados\logout.png)
+
+ * **Diagrama Unificado** 
+ ![Diagrama de Sequência Unficado](modelagens\diagrama-sequencia\sequencia.png)
+
+**Cenário mostrado:**  
+Ilustra o fluxo completo de um usuário acessando o sistema:  
+
+1. Login/autenticação.
+2. Redirecionamento ao dashboard.
+3. Consulta de laudos em aberto.
+4. Criação de novo laudo, incluindo etapas como autopreenchimento de dados veiculares e upload de anexos.
+5. (Se gerente) Visualização e gestão de equipe.
+
+Esse tipo de diagrama é essencial para alinhar times frontend e backend e esclarecer dúvidas sobre a ordem dos eventos e permissões.
+
+---
+
+### Visualização dos Diagramas
+
+- **Arquivos `.puml`**: podem ser abertos e editados com VSCode + extensão PlantUML, IntelliJ IDEA (plugin PlantUML) ou online ([plantuml.com/plantuml/uml/](https://plantuml.com/plantuml/uml/)).
+- **Arquivos `.png` ou `.svg`**: abrem em qualquer visualizador de imagens.
+
+---
+
+### Recomendações de Uso
+
+- **Consulte o diagrama de casos de uso** para se familiarizar com o escopo funcional do sistema.
+- **Analise o ERD** antes de propor alterações no banco de dados ou nas regras de negócio.
+- **Utilize o diagrama de sequência** sempre que houver dúvidas sobre um fluxo específico ou ao criar integrações novas.
+
+> **Sempre mantenha as modelagens atualizadas!**  
+> Alterações significativas de fluxo ou entidades devem ser refletidas nos diagramas e arquivadas na mesma pasta `modelagens`.
+
+---
+
+# **Dúvidas?**  
+Entre em contato comigo através do meu email de contato ou acesse os arquivos e exemplos.
 
 

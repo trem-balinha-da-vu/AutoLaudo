@@ -135,7 +135,7 @@ end
 
 
 ' ===== Gerenciamento de perfis =====
-@startuml gerenciamento de perfis 
+@startuml gerenciamento_de_perfis 
 actor Admin
 participant "Frontend" as FE
 participant "API Backend" as API
