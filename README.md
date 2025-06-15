@@ -313,7 +313,7 @@ Formato: PlantUML, PNG
 Apresenta as interações dos atores (usuários) com as principais funcionalidades do sistema.
 
 **Visualização:**  
-![Diagrama de Casos de Uso](modelagens\diagrama-caso-de-uso\UseCases_AutoLaudo.png)
+![Diagrama de Casos de Uso](modelagens/diagrama-caso-de-uso/UseCases_AutoLaudo.png)
 
 **Cenário mostrado:**  
 No exemplo acima, o ator **Perito** pode criar laudos, consultar históricos e editar seus próprios laudos. O **Gerente Regional** pode, além disso, visualizar métricas da equipe e aprovar laudos. O **Administrador** tem acesso a toda a gestão de perfis, permissões e relatórios do sistema.
