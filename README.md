@@ -329,7 +329,7 @@ Formatos: PlantUML, PNG
 Modela as entidades do banco de dados (tabelas), seus campos e os relacionamentos (associações, chaves estrangeiras etc).
 
 **Visualização:**  
-![Diagrama Entidade-Relacionamento](modelagens\diagrama-ER\ERD_AutoLaudo.png)
+![Diagrama Entidade-Relacionamento](modelagens/diagrama-ER/ERD_AutoLaudo.png)
 
 **Cenário mostrado:**  
 No diagrama acima, temos entidades como **Usuário**, **Perito**, **GerenteRegional**, **Permissão**, **Perfil** e os relacionamentos entre elas. Por exemplo, cada Usuário pode ter vários Perfis e Permissões, e há uma ligação clara entre Perito e Gerente Regional (para promoções/rebaixamentos). O diagrama serve como base para implementação e manutenção do banco de dados relacional.
@@ -346,17 +346,17 @@ Mostra, passo a passo, a comunicação entre os componentes do sistema em cada f
  
  **Visualização:**
  * **Diagramas separados por módulo**  
- Login![](modelagens\diagrama-sequencia\modulos-separados\login.png)
- Dashboard![](modelagens\diagrama-sequencia\modulos-separados\dashboard.png)
- Laudo![](modelagens\diagrama-sequencia\modulos-separados\laudo.png)
- Relatorio![](modelagens\diagrama-sequencia\modulos-separados\relatorio.png)
- Gerente![](modelagens\diagrama-sequencia\modulos-separados\gerente.png)
- Gerenciamento De Perfis - Admin![](modelagens\diagrama-sequencia\modulos-separados\gerenciamento_de_perfis.png)
+ Login![](modelagens/diagrama-sequencia/modulos-separados/login.png)
+ Dashboard![](modelagens/diagrama-sequencia/modulos-separados/dashboard.png)
+ Laudo![](modelagens/diagrama-sequencia/modulos-separados/laudo.png)
+ Relatorio![](modelagens/diagrama-sequencia/modulos-separados/relatorio.png)
+ Gerente![](modelagens/diagrama-sequencia/modulos-separados/gerente.png)
+ Gerenciamento De Perfis - Admin![](modelagens/diagrama-sequencia/modulos-separados/gerenciamento_de_perfis.png)
  Logout 
- ![](modelagens\diagrama-sequencia\modulos-separados\logout.png)
+ ![](modelagens/diagrama-sequencia/modulos-separados/logout.png)
 
  * **Diagrama Unificado** 
- ![Diagrama de Sequência Unficado](modelagens\diagrama-sequencia\sequencia.png)
+ ![Diagrama de Sequência Unficado](modelagens/diagrama-sequencia/sequencia.png)
 
 **Cenário mostrado:**  
 Ilustra o fluxo completo de um usuário acessando o sistema:  
