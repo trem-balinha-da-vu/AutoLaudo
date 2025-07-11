@@ -1,0 +1,81 @@
+@startuml ERD_Usuarios_Permissoes
+hide circle
+left to right direction
+
+entity "usuario" as USUARIO {
+  * id : INTEGER <<PK>>
+    nome : VARCHAR
+    email : VARCHAR
+    senha_hash : VARCHAR
+    id_perfil : INTEGER <<FK>>
+    uuid: VARCHAR
+}
+
+entity "perfil" as PERFIL {
+  * id_perfil : INTEGER <<PK>>
+    nome_perfil : VARCHAR
+}
+
+entity "usuario_permissao" as USUARIO_PERMISSAO {
+  * id_usuario : INTEGER <<PK, FK>>
+  * id_permissao : INTEGER <<PK, FK>>
+}
+
+entity "permissao" as PERMISSAO {
+  * id : INTEGER <<PK>>
+    nome_permissao : VARCHAR
+}
+
+entity "perito" as PERITO {
+  * id_usuario : INTEGER <<PK, FK>>
+    crm_perito : VARCHAR
+    area_especialidade : VARCHAR
+    nivel_experiencia : VARCHAR
+    telefone_contato : VARCHAR
+    ativo : BOOLEAN
+    uuid : VARCHAR
+}
+
+entity "gerente_regional" as GERENTE_REGIONAL {
+  * id_perito : INTEGER <<PK, FK>>
+    regional : VARCHAR
+    uuid : VARCHAR
+}
+
+entity "administrador" as ADMINISTRADOR {
+  * id_usuario : INTEGER <<PK, FK>>
+    id_nivel : INTEGER <<FK>>
+    uuid : VARCHAR
+}
+
+entity "nivel_acesso" as NIVEL_ACESSO {
+  * id_nivel : INTEGER <<PK>>
+    descricao : VARCHAR
+}
+
+entity "sincronizador" as SINCRONIZADOR {
+  * id_sync : INTEGER <<PK>>
+    data_sync : TIMESTAMP
+    id_usuario : INTEGER <<FK>>
+    id_laudo : INTEGER <<FK>>
+}
+
+entity "historico_alteracao" as HISTORICO_ALTERACAO {
+  * id_hist : INTEGER <<PK>>
+    data_alteracao : TIMESTAMP
+    descricao : TEXT
+    id_usuario : INTEGER <<FK>>
+    id_laudo : INTEGER <<FK>>
+}
+
+USUARIO }o--|| PERFIL : pertence >
+USUARIO ||--o{ USUARIO_PERMISSAO : possui >
+PERMISSAO ||--o{ USUARIO_PERMISSAO : possui >
+USUARIO ||--o{ PERITO : é perito >
+USUARIO ||--o{ ADMINISTRADOR : é admin >
+PERITO ||--o{ GERENTE_REGIONAL : é gerente regional >
+ADMINISTRADOR }o--|| NIVEL_ACESSO : tem nível >
+USUARIO ||--o{ HISTORICO_ALTERACAO : altera >
+USUARIO ||--o{ SINCRONIZADOR : sincs >
+
+@enduml

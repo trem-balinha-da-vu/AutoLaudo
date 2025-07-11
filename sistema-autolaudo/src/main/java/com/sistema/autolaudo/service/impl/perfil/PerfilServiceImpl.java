@@ -1,4 +1,4 @@
-package com.sistema.autolaudo.service.perfil.impl;
+package com.sistema.autolaudo.service.impl.perfil;
 
 import com.sistema.autolaudo.dto.perfil.PerfilRequest;
 import com.sistema.autolaudo.dto.perfil.PerfilResponse;

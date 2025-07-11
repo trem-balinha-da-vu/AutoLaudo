@@ -1,0 +1,122 @@
+@startuml ERD_Laudo_Veiculo_Norma
+hide circle
+left to right direction
+
+entity "veiculo" as VEICULO {
+  * placa : VARCHAR <<PK>>
+    chassi : VARCHAR
+    renavam : VARCHAR
+    modelo : VARCHAR
+    ano_fabricacao : INTEGER
+    status_registro : VARCHAR
+}
+
+entity "integracao_detran" as INTEGRACAO_DETRAN {
+  * id_integracao : INTEGER <<PK>>
+    api : VARCHAR
+    data_chamada : TIMESTAMP
+    resultado : TEXT
+    placa_veiculo : VARCHAR <<FK>>
+}
+
+entity "laudo_status" as LAUDO_STATUS {
+  * id_status : INTEGER <<PK>>
+    nome : VARCHAR
+}
+
+entity "orgao_requisitante" as ORGAO_REQUISITANTE {
+  * id_orgao : INTEGER <<PK>>
+    nome : VARCHAR
+}
+
+entity "selo_digital" as SELO_DIGITAL {
+  * id_selo : INTEGER <<PK>>
+    data_emissao : TIMESTAMP
+    autoridade_emissora : VARCHAR
+    hash_conformidade : VARCHAR
+}
+
+entity "formulario_laudo" as FORMULARIO_LAUDO {
+  * id : INTEGER <<PK>>
+    modo_offline : BOOLEAN
+    id_template : INTEGER <<FK>>
+}
+
+entity "laudo_veicular" as LAUDO_VEICULAR {
+  * id_laudo : INTEGER <<PK>>
+    data_criacao : TIMESTAMP
+    data_entrega : TIMESTAMP
+    data_emissao : TIMESTAMP
+    resumo_problema : TEXT
+    detalhamento_analises : TEXT
+    conclusao : TEXT
+    observacoes : TEXT
+    hash_documento : VARCHAR
+    id_status : INTEGER <<FK>>
+    id_orgao : INTEGER <<FK>>
+    id_selo : INTEGER <<FK>>
+    id_formulario : INTEGER <<FK>>
+    placa_veiculo : VARCHAR <<FK>>
+    id_perito : INTEGER <<FK>>
+}
+
+entity "laudo_norma" as LAUDO_NORMA {
+  * id_laudo : INTEGER <<PK, FK>>
+  * id_norma : INTEGER <<PK, FK>>
+}
+
+entity "norma" as NORMA {
+  * id : INTEGER <<PK>>
+    nome_norma : VARCHAR
+    tipo : VARCHAR
+    texto_norma : TEXT
+}
+
+entity "template_laudo" as TEMPLATE_LAUDO {
+  * id: INTEGER <<PK>>
+    nome : VARCHAR
+    versao : VARCHAR
+}
+
+entity "template_norma" as TEMPLATE_NORMA {
+  * id_template : INTEGER <<PK, FK>>
+  * id_norma : INTEGER <<PK, FK>>
+}
+
+entity "template_laudo_campos_obrigatorios" as TEMPLATE_LAUDO_CAMPOS {
+  * id_template : INTEGER <<PK, FK>>
+  * campos_obrigatorios : VARCHAR
+}
+
+entity "form_laudo_campo" as FORM_LAUDO_CAMPO {
+  * id_formulario : INTEGER <<PK, FK>>
+  * nome_campo : VARCHAR <<PK>>
+    valor : TEXT
+}
+
+entity "imagem" as IMAGEM {
+  * id_imagem : INTEGER <<PK>>
+    caminho : VARCHAR
+    legenda : VARCHAR
+    tipo : VARCHAR
+    id_laudo : INTEGER <<FK>>
+}
+
+' Relações
+
+VEICULO ||--o{ INTEGRACAO_DETRAN : integra >
+LAUDO_VEICULAR }o--|| LAUDO_STATUS : tem status >
+LAUDO_VEICULAR }o--|| ORGAO_REQUISITANTE : requisitado por >
+LAUDO_VEICULAR }o--|| SELO_DIGITAL : selado >
+LAUDO_VEICULAR }o--|| FORMULARIO_LAUDO : formulário >
+LAUDO_VEICULAR }o--|| VEICULO : do veículo >
+LAUDO_VEICULAR ||--o{ IMAGEM : imagens >
+TEMPLATE_LAUDO ||--o{ TEMPLATE_NORMA : referencia >
+NORMA ||--o{ TEMPLATE_NORMA : usada por >
+TEMPLATE_LAUDO ||--o{ TEMPLATE_LAUDO_CAMPOS : campos obrigatórios >
+TEMPLATE_LAUDO ||--o{ FORMULARIO_LAUDO : instancia >
+FORMULARIO_LAUDO ||--o{ FORM_LAUDO_CAMPO : campos >
+LAUDO_VEICULAR ||--o{ LAUDO_NORMA : valida conforme >
+NORMA ||--o{ LAUDO_NORMA : aplicada em >
+
+@enduml

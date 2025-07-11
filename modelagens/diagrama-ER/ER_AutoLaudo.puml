@@ -1,186 +1,236 @@
-@startuml ERD_AutoLaudo
-hide circle
+@startuml AutoLaudoClasses
+skinparam classAttributeIconSize 0
 left to right direction
 
-
-'======================================================================
-' Entidades principais
-'======================================================================
-entity "USUARIO" as USUARIO {
-  * idUsuario : INTEGER <<PK>>
-    nome        : VARCHAR
-    email       : VARCHAR
-    senhaHash   : VARCHAR
-    perfil      : VARCHAR    (PERITO, GERENTE_REGIONAL, ADMINISTRADOR)
+'---------------------- Usuário, Perfil, Permissão -------------------------
+class Usuario {
+  + id: int
+  + nome: string
+  + email: string
+  + senha_hash: string
+  + id_perfil: int
+  + uuid: string
+  + autenticar(email, senha)
+  + listar_permissoes(): List<Permissao>
 }
 
-entity "PERITO" as PERITO {
-  registro : VARCHAR
+class Perfil {
+  + id_perfil: int
+  + nome_perfil: string
 }
 
-entity "GERENTE" as GERENTE{
-  regional : VARCHAR
+class Permissao {
+  + id: int
+  + nome_permissao: string
 }
 
-entity "ADMINISTRADOR" as ADM {
-  nivelAcesso : VARCHAR
+class UsuarioPermissao {
+  + id_usuario: int
+  + id_permissao: int
 }
 
-PERITO ||--o{ USUARIO : extende de >
-GERENTE ||--o{ PERITO : extende de >
-ADM ||--o{ USUARIO : extende de >
+Usuario "N" --|| "1" Perfil : pertence >
+Usuario "1" -- "0..*" UsuarioPermissao : possui >
+Permissao "1" -- "0..*" UsuarioPermissao : pertence >
+Usuario "1" -- "0..1" Perito : é_perito >
+Usuario "1" -- "0..1" Administrador : é_admin >
 
-entity "PERMISSAO" as PERMISSAO {
-  * idPermissao : INTEGER <<PK>>
-    nomePermissao : VARCHAR
-    descricao     : VARCHAR
+'---------------------- Perito, Gerente, Administrador -------------------------
+class Perito {
+  + id_usuario: int
+  + crm_perito: string
+  + area_especialidade: string
+  + nivel_experiencia: string
+  + telefone_contato: string
+  + ativo: bool
+  + uuid: string
+  + promover_gerente(id_perito: int) : GerenteRegional
+  + rebaixar_perito (id_perito: int): Perito
 }
 
-entity "USUARIO_PERMISSAO" as USUARIO_PERMISSAO {
-  * idUsuario    : INTEGER <<PK, FK>>
-  * idPermissao  : INTEGER <<PK, FK>>
+class GerenteRegional {
+  + id_perito: int
+  + regional: string
+  + uuid: string
+  + listar_peritos_regiao()
+  + validar_laudo(laudo: LaudoVeicular)
 }
 
-USUARIO ||--o{ USUARIO_PERMISSAO : possui >
-PERMISSAO ||--o{ USUARIO_PERMISSAO : pertence >
-
-'======================================================================
-' Norma e TemplateLaudo (M:N)
-'======================================================================
-entity "NORMA" as NORMA {
-  * idNorma    : INTEGER <<PK>>
-    nomeNorma  : VARCHAR
-    tipo       : VARCHAR    (CONTRAN, ICPAS, OUTRAS)
-    textoNorma : TEXT
+class Administrador {
+  + id_usuario: int
+  + id_nivel: int
+  + uuid: string
+  + cadastrar_usuario(usuario: Usuario)
+  + definir_permissao(usuario: Usuario, permissao: Permissao)
+  + resetar_senha(usuario: Usuario)
 }
 
-entity "TEMPLATE_LAUDO" as TEMPLATE_LAUDO {
-  * idTemplate       : INTEGER <<PK>>
-    nome             : VARCHAR
-    versao           : VARCHAR
+class NivelAcesso {
+  + id_nivel: int
+  + descricao: string
 }
 
-entity "TEMPLATE_NORMA" as TEMPLATE_NORMA {
-  * idTemplate : INTEGER <<PK, FK>>
-  * idNorma    : INTEGER <<PK, FK>>
+Perito "1" -- "0..1" GerenteRegional : é_gerente >
+Administrador "N" --|| "1" NivelAcesso : tem_nível >
+
+'---------------------- Veículo e Integração DETRAN -------------------------
+class Veiculo {
+  + placa: string
+  + chassi: string
+  + renavam: string
+  + modelo: string
+  + ano_fabricacao: int
+  + status_registro: string
+  + cadastrar()
+  + consultar_detran()
+  + listar_laudos(): List<LaudoVeicular>
 }
 
-TEMPLATE_LAUDO ||--o{ TEMPLATE_NORMA : referencia >
-NORMA         ||--o{ TEMPLATE_NORMA : referenciada em >
-
-'======================================================================
-' FormularioLaudo e campos
-'======================================================================
-entity "FORMULARIO_LAUDO" as FORMULARIO_LAUDO {
-  * idFormulario : INTEGER <<PK>>
-    modoOffline   : BOOLEAN
-    idTemplate    : INTEGER <<FK>>  
+class IntegracaoDetran {
+  + id_integracao: int
+  + api: string
+  + data_chamada: datetime
+  + resultado: string
+  + placa_veiculo: string
+  + consultar()
 }
 
-FORMULARIO_LAUDO }o--|| TEMPLATE_LAUDO : usa >
+Veiculo "1" -- "0..*" IntegracaoDetran : integra >
 
-entity "FORM_LAUDO_CAMPO" as FORM_LAUDO_CAMPO {
-  * idFormulario : INTEGER <<PK, FK>>
-  * nomeCampo    : VARCHAR <<PK>>
-    valor         : VARCHAR
+'---------------------- Laudo, Status, Selo, Orgao, etc. -------------------------
+class LaudoStatus {
+  + id_status: int
+  + nome: string
 }
 
-FORMULARIO_LAUDO ||--o{ FORM_LAUDO_CAMPO : possui campos >
-
-'======================================================================
-' Veiculo
-'======================================================================
-entity "VEICULO" as VEICULO {
-  * placa           : VARCHAR <<PK>>
-    chassi          : VARCHAR
-    renavam         : VARCHAR
-    modelo          : VARCHAR
-    anoFabricacao   : INTEGER
-    statusRegistro  : VARCHAR
+class OrgaoRequisitante {
+  + id_orgao: int
+  + nome: string
 }
 
-'======================================================================
-' LaudoVeicular
-'======================================================================
-entity "SELO_DIGITAL" as SELO_DIGITAL {
-  * idSelo          : INTEGER <<PK>>
-    dataEmissao     : DATE
-    autoridadeEmissora : VARCHAR
-    hashConformidade   : VARCHAR
+class SeloDigital {
+  + id_selo: int
+  + data_emissao: datetime
+  + autoridade_emissora: string
+  + hash_conformidade: string
+  + validar_selo(): bool
 }
 
-entity "LAUDO_VEICULAR" as LAUDO_VEICULAR {
-  * idLaudo          : INTEGER <<PK>>
-    dataCriacao      : DATE
-    dataEmissao      : DATE
-    status           : VARCHAR   ' (EM_EDICAO, VALIDADO, APROVADO, REJEITADO, GERADO_PDF)
-    tipoLaudo        : VARCHAR
-    descricaoProblema: TEXT
-    localTroca       : VARCHAR
-    detalhamentoTroca: TEXT
-    observacoes      : TEXT
-    hashDocumento    : VARCHAR
-  -- chaves estrangeiras --
-    idSelo           : INTEGER <<FK>>
-    idFormulario     : INTEGER <<FK>>
-    placaVeiculo     : VARCHAR <<FK>>
-    idPerito         : INTEGER <<FK>>   ' Usuário que gerou o laudo
+class FormularioLaudo {
+  + id: int
+  + modo_offline: bool
+  + id_template: int
+  + preencher_campo(nome: string, valor: string)
+  + validar_formulario(): bool
+  + enviar_para_laudo(): LaudoVeicular
 }
 
-LAUDO_VEICULAR }o--|| SELO_DIGITAL     : contém >
-LAUDO_VEICULAR ||--o{ FORMULARIO_LAUDO : originado de >
-LAUDO_VEICULAR }o--|| VEICULO          : referente a >
-LAUDO_VEICULAR }o--|| USUARIO          : gerado por >
-
-'======================================================================
-' Imagem e HistoricoAlteracao
-'======================================================================
-entity "IMAGEM" as IMAGEM {
-  * idImagem    : INTEGER <<PK>>
-    caminho     : VARCHAR
-    legenda     : VARCHAR
-    tipo        : VARCHAR
-    idLaudo     : INTEGER <<FK>>
+class LaudoVeicular {
+  + id_laudo: int
+  + data_criacao: datetime
+  + data_entrega: datetime
+  + data_emissao: datetime
+  + resumo_problema: string
+  + detalhamento_analises: string
+  + conclusao: string
+  + observacoes: string
+  + hash_documento: string
+  + id_status: int
+  + id_orgao: int
+  + id_selo: int
+  + id_formulario: int
+  + placa_veiculo: string
+  + id_perito: int
+  + gerar_pdf()
+  + atualizar_status(novo_status: int)
+  + anexar_imagem(imagem: Imagem)
+  + listar_normas(): List<Norma>
 }
 
-LAUDO_VEICULAR ||--o{ IMAGEM : contém >
+LaudoVeicular "N" --|| "1" LaudoStatus : tem_status >
+LaudoVeicular "N" --|| "1" OrgaoRequisitante : requisitado_por >
+LaudoVeicular "N" --|| "1" SeloDigital : selado >
+LaudoVeicular "N" --|| "1" FormularioLaudo : formulário >
+LaudoVeicular "N" --|| "1" Veiculo : do_veiculo >
+LaudoVeicular "N" --|| "1" Usuario : periciado_por >
 
-entity "HISTORICO_ALTERACAO" as HISTORICO_ALTERACAO {
-  * idHist       : INTEGER <<PK>>
-    dataAlt      : DATETIME
-    descricao    : TEXT
-    idUsuario    : INTEGER <<FK>>   ' Quem fez a alteração
-    idLaudo      : INTEGER <<FK>>
+'---------------------- LaudoNorma, Norma, Templates, Campos -------------------------
+class LaudoNorma {
+  + id_laudo: int
+  + id_norma: int
 }
 
-LAUDO_VEICULAR ||--o{ HISTORICO_ALTERACAO : tem histórico >
-USUARIO        ||--o{ HISTORICO_ALTERACAO : registrado por >
-
-'======================================================================
-' Norma aplicada ao Laudo (M:N indireto)
-'======================================================================
-entity "LAUDO_NORMA" as LAUDO_NORMA {
-  * idLaudo : INTEGER <<PK, FK>>
-  * idNorma : INTEGER <<PK, FK>>
+class Norma {
+  + id: int
+  + nome_norma: string
+  + tipo: string
+  + texto_norma: string
+  + validar_laudo(laudo: LaudoVeicular): bool
 }
 
-LAUDO_VEICULAR ||--o{ LAUDO_NORMA : valida de acordo com >
-NORMA         ||--o{ LAUDO_NORMA : aplicada em >
+class TemplateLaudo {
+  + id: int
+  + nome: string
+  + versao: string
+}
 
-'======================================================================
-' Veiculo (já definido) – IntegracaoDetran via processo, não armazenado
-'======================================================================
-' A integração com Detran e Renavam é feita via API,
-' portanto não mapeamos IntegracaoDetran como entidade persistente.
+class TemplateNorma {
+  + id_template: int
+  + id_norma: int
+}
 
-'======================================================================
-' Usuários especializados (Perito, GerenteRegional, Administrador)
-'======================================================================
-' Já representados em USUARIO com atributo perfil.
+class TemplateLaudoCamposObrigatorios {
+  + id_template: int
+  + campos_obrigatorios: string
+}
 
-'======================================================================
-' Demais entidades de processo (Dashboard, Sincronizador, Auth2FA, Criptografia)
-'======================================================================
-' Não mapeadas como entidades ER, pois não geram tabelas persistentes.
+class FormLaudoCampo {
+  + id_formulario: int
+  + nome_campo: string
+  + valor: string
+}
+
+TemplateLaudo "1" -- "0..*" TemplateNorma : referencia >
+Norma "1" -- "0..*" TemplateNorma : usada_por >
+TemplateLaudo "1" -- "0..*" TemplateLaudoCamposObrigatorios : campos_obrigatórios >
+TemplateLaudo "1" -- "0..*" FormularioLaudo : instancia >
+FormularioLaudo "1" -- "0..*" FormLaudoCampo : campos >
+
+LaudoVeicular "1" -- "0..*" LaudoNorma : valida_conforme >
+Norma "1" -- "0..*" LaudoNorma : aplicada_em >
+
+'---------------------- Imagem, Histórico, Sincronizador -------------------------
+class Imagem {
+  + id_imagem: int
+  + caminho: string
+  + legenda: string
+  + tipo: string
+  + id_laudo: int
+  + excluir()
+}
+
+class HistoricoAlteracao {
+  + id_hist: int
+  + data_alteracao: datetime
+  + descricao: string
+  + id_usuario: int
+  + id_laudo: int
+  + registrar_alteracao(usuario: Usuario, desc: string)
+}
+
+LaudoVeicular "1" -- "0..*" Imagem : imagens >
+LaudoVeicular "1" -- "0..*" HistoricoAlteracao : historico >
+Usuario "1" -- "0..*" HistoricoAlteracao : altera >
+
+class Sincronizador {
+  + id_sync: int
+  + data_sync: datetime
+  + id_usuario: int
+  + id_laudo: int
+  + sincronizar()
+}
+
+LaudoVeicular "1" -- "0..*" Sincronizador : sincs >
+Usuario "1" -- "0..*" Sincronizador : sincs >
 
 @enduml

@@ -1,0 +1,64 @@
+@startuml laudo
+
+actor Perito
+participant "Frontend" as FE
+participant "API Backend" as API
+database "DB"
+database "Detran API" as Detran
+
+Perito -> FE : Seleciona "Novo Laudo"
+FE -> API : GET /templates
+API -> DB : Busca templates disponíveis
+DB --> API : Retorna lista de templates
+API -> FE : Envia lista de templates
+
+Perito -> FE : Seleciona template (tipo de laudo)
+FE -> API : GET /templates/{id}/formulario
+API -> DB : Busca estrutura do formulário\n(campos obrigatórios, normas)
+DB --> API : Retorna campos e normas associadas
+API -> FE : Exibe formulário dinâmico ao perito
+
+Perito -> FE : Preenche campos do formulário
+alt Validação de veículo (opcional)
+  FE -> API : GET /veiculo/{placa}
+  API -> Detran : Consulta dados do veículo por placa
+  Detran --> API : Retorna dados do veículo
+  API -> FE : Preenche campos automaticamente
+end
+
+Perito -> FE : Preenche demais campos e anexa imagens/evidências
+loop (Para cada campo)
+  FE -> API : POST /formulario/{id}/campo {nome, valor}
+  API -> DB : Salva campo preenchido (form_laudo_campo)
+  DB --> API : Confirmação
+  API -> FE : Ok
+end
+
+Perito -> FE : Salva rascunho ou submete laudo
+FE -> API : POST /laudos {id_formulario, imagens, normas aplicadas, ...}
+API -> DB : Cria registro laudo_veicular (status = PENDENTE)
+DB --> API : Confirmação (id_laudo)
+API -> FE : Retorna id_laudo, status
+
+FE -> Perito : Mostra laudo salvo/emitido
+
+alt Revisão/edição posterior
+  Perito -> FE : Edita campos, adiciona anexos
+  FE -> API : PATCH /laudos/{id_laudo} {dados alterados}
+  API -> DB : Atualiza laudo/histórico/novos campos
+  DB --> API : Confirmação
+  API -> FE : Ok
+  FE -> Perito : Atualização salva
+end
+
+alt Aprovação/Avaliação
+  Perito/Gerente -> FE : Solicita avaliação/finaliza laudo
+  FE -> API : POST /laudos/{id_laudo}/finalizar
+  API -> DB : Atualiza status, registra data_emissao
+  DB --> API : Confirmação
+  API -> FE : Status atualizado (AGUARDANDO_AVALIACAO/APROVADO/REJEITADO)
+  FE -> Perito : Mostra status final
+end
+
+@enduml
+

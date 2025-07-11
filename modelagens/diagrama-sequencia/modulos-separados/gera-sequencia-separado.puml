@@ -24,20 +24,28 @@ participant "API Backend" as API
 database "DB"
 
 Usuario -> FE : Acessa dashboard (após login)
-FE -> API : GET /dashboard (token)
-API -> DB : Busca dados do usuário e atalhos
 alt Perfil = PERITO
-    API -> DB : Busca laudos em aberto do perito
+    FE -> API : GET /laudos/dashboard/status/{idPerito}
+    API -> DB : Busca laudos do perito
+    DB --> API : Lista de laudos por status
+    FE -> Usuario : grafico pizza - laudos do perito por status
+    FE -> API : GET /laudos/dashboard/mes?id_perito&filtros
+    API -> DB : Busca laudos do perito
     DB --> API : Lista de laudos
+    FE -> Usuario : tabela - acumulado de laudos por mês do perito
 else Perfil = GERENTE REGIONAL
-    API -> DB : Busca laudos da equipe
-    API -> DB : Busca dados dos peritos sob gestão
-    DB --> API : Lista de laudos e peritos
+    FE -> API : GET /laudos/dashboard/status/
+    API -> DB : Busca laudos dos peritos gerenciados
+    DB --> API : Lista de laudos por status
+    FE -> Usuario : grafico pizza - laudos dos peritos por status
+    FE -> API : GET /laudos/dashboard/mes?filtros
+    API -> DB : Busca laudos 
+    DB --> API : Lista de laudos
+    FE -> Usuario : tabela - acumulado de laudos por mês dos peritos
 else Perfil = ADMIN
     API -> DB : Busca métricas do sistema
     DB --> API : Dados agregados
 end
-API -> FE : Retorna dados do dashboard (customizado)
 FE -> Usuario : Exibe atalhos e dados relevantes
 @enduml
 
