@@ -1,0 +1,25 @@
+@startuml UseCases_AutoLaudo2
+left to right direction
+
+skinparam usecase {
+  BackgroundColor LightBlue
+  BorderColor DarkBlue
+  ArrowColor Black
+}
+
+skinparam packageStyle rectangle
+
+actor "Perito" as Perito
+actor "Gerente Regional" as Gerente
+actor "Administrador" as Admin
+
+Perito <|-- Gerente
+
+rectangle Autenticacao{
+  usecase "Fazer Login" as UC_Login
+
+  Usuario -- (Autenticacao)
+  usecase "Acessar\nSistema" as Acesso
+  Acesso ..> UC_Login : <<include>>
+
+}

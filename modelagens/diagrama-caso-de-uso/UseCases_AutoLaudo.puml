@@ -12,24 +12,11 @@ skinparam packageStyle rectangle
 '-------------------------------------------------------------
 ' Atores no topo (alinhados horizontalmente)
 '-------------------------------------------------------------
-actor "Usuario" as Usuario
 actor "Perito" as Perito
 actor "Gerente Regional" as Gerente
 actor "Administrador" as Admin
 
-Usuario <|-- Perito
-Usuario <|-- Admin
 Perito <|-- Gerente
-
-rectangle Autenticacao{
-  usecase "Fazer Login" as UC_Login
-
-  Usuario -- (Autenticacao)
-  usecase "Acessar\nSistema" as Acesso
-  Acesso ..> UC_Login : <<include>>
-
-}
-
 
 '-------------------------------------------------------------
 ' “Sistema AutoLaudo” engloba todos os casos de uso 
